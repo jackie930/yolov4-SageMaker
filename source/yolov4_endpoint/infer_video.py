@@ -40,12 +40,17 @@ def detect_objects(weight,names,cfg,video):
         print("[INFO] no approx. completion time can be provided")
         total = -1
 
+    i=0
     # initialize video stream, pointer to output video file and grabbing frame dimension
+
     while(cap.isOpened()):
         stime= time.time()
         ret, frame = cap.read()
         classes, confidences, boxes = yolo_infer(weight,cfg,frame)
         end = time.time()
+
+        i = i+1
+        print (i)
 
         if ret:
             for classId, confidence, box in zip(classes.flatten(), confidences.flatten(), boxes):
@@ -60,7 +65,7 @@ def detect_objects(weight,names,cfg,video):
 
             if writer is None:
                 # Initialize the video writer
-                fourcc = cv.VideoWriter_fourcc(*"MJPG")
+                fourcc = cv.VideoWriter_fourcc(*"MP4V")
                 writer = cv.VideoWriter('./res.mp4', fourcc, 30,
                                         (frame.shape[1], frame.shape[0]), True)
                 # some information on processing single frame
@@ -76,10 +81,11 @@ def detect_objects(weight,names,cfg,video):
             print('FPS {:1f}'.format(1/(time.time() -stime)))
             if cv.waitKey(1)  & 0xFF == ord('q'):
                 break
+            if i>30:
+                break
         else:
             break
 
     print ("<<<<clean up")
     writer.release()
     cap.release()
-
