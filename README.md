@@ -4,10 +4,21 @@ Deploy YOLO-V4 on Amazon SageMaker
 
 <a name="YOLOv4"></a>
 
+## Features
+
+- [x] **Use opencv-4.4.0.40 to deploy yolov4**
+- [x] **Use flask+docker to deploy the rest-api locally**
+- [ ] **Use Amazon SageMaker to deploy the endpoint**
+- [x] **Suopport video input loccally**
+- [ ] **deploy on spot bot)**
+
+
 ## Quick Start
 ---------------
 # first download yolov4 public model and put under pretrained_model folder
 s3://open-source-models/pretrained_model.zip
+
+todo : add how to download from public website
 
 ```shell script
 |-- source
@@ -62,4 +73,11 @@ Wall time: 1.66 s
 ~~~~
 cd yolov4_endpoint
 python create_endpoint.py
+~~~~
+
+## local infer on image
+todo
+## local infer on video
+~~~~
+python yolov4_endpoint/infer_video.py 
 ~~~~
