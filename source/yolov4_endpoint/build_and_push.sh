@@ -10,8 +10,8 @@ image=$1
 
 if [ "$image" == "" ]
 then
-    echo "Use image name esd-crnn"
-    image="esd-crnn"
+    echo "Use image name yolov4"
+    image="yolov4"
 fi
 
 # Get the account number associated with the current IAM credentials

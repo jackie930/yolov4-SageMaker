@@ -30,6 +30,7 @@ RUN ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Set up the program in the image
 COPY * /opt/program/
+COPY ./pretrained_model/* /opt/program/
 WORKDIR /opt/program
 
 ENTRYPOINT ["python", "serve.py"]
