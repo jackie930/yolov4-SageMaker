@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import time
 import imutils
 
+# todo: use queue to speed up https://github.com/AlexeyAB/darknet/blob/master/darknet_video.py
+
 def yolo_infer(weight,cfg,frame):
     net = cv.dnn_DetectionModel(cfg,weight)
     net.setInputSize(608, 608)

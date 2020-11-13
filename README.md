@@ -10,6 +10,7 @@ Deploy YOLO-V4 on Amazon SageMaker
 - [x] **Use flask+docker to deploy the rest-api locally**
 - [ ] **Use Amazon SageMaker to deploy the endpoint**
 - [x] **Suopport video input loccally**
+- [ ] **video queue infer**
 - [ ] **deploy on spot bot)**
 
 
