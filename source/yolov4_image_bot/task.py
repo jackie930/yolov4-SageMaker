@@ -13,7 +13,6 @@ import multiprocessing as mul
 
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from datetime import datetime
-from bbox import main
 
 region_name = os.getenv("region_name")
 endpoint_name = os.getenv("endpoint_name")

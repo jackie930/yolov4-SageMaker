@@ -10,7 +10,7 @@ ENV LANG=C.UTF-8
 
 COPY . /tmp
 WORKDIR /tmp
-RUN pip install boto3 pandas -i https://opentuna.cn/pypi/web/simple
+RUN pip install boto3 -i https://opentuna.cn/pypi/web/simple
 RUN pip install glog -i https://opentuna.cn/pypi/web/simple
 RUN pip install elasticsearch==7.8.0 -i https://opentuna.cn/pypi/web/simple
 RUN pip install requests -i https://opentuna.cn/pypi/web/simple
