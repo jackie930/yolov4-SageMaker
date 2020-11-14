@@ -25,7 +25,7 @@ elastic_search_protocol = os.getenv("es_protocol")
 batch_id = os.getenv("batch_id")
 job_id = os.getenv("job_id")
 elastic_search_index = os.getenv('es_index')
-import pandas as pd
+
 import sys
 try:
     reload(sys)
@@ -68,44 +68,30 @@ def text_summary_main(input_s3_path_list: list, endpoint_name, output_s3_bucket,
         eprint(file_name, key, bucket)
         s3.download_file(Filename=file_name, Key=key, Bucket=bucket)
 
-        try:
-            # read image
-            eprint("process", s3_path)
-           #process_the_image_and_output_res
+        #try:
+        # read image
+        eprint("process", s3_path)
+       #process_the_image_and_output_res
+        infer_res = infer(bucket,input_image)
+        label = {'classes': infer_res['classes'],
+                 'confidences':infer_res['confidences'],
+                 'boxes':infer_res['boxes']}
 
+        # output the recognized pics to s3
+        draw_bbox(file_name,infer_res['classes'],infer_res['confidences'],infer_res['boxes'])
+        print ("<<<< output_s3_prefix: ",output_s3_prefix)
+        upload_key=output_s3_prefix+'/'+file_name
+        s3.upload_file(Filename=json_file, Key=upload_key, Bucket=output_s3_bucket)
+        print("uploaded to s3://{}/{}".format(output_s3_bucket, upload_key))
 
-
-            print ("<<<<<<<<<<<<<<<")
-            print ("<<<< res", res)
-
-            output_s3_subimg_prefix = 'sub_images'
-            infer_ls = []
-            for i in img_list:
-                if i.split('_')[0]=='box':
-                    try:
-                        upload_key=output_s3_subimg_prefix+'/'+i
-                        s3.upload_file(Filename=os.path.join('./res',i), Key=upload_key, Bucket=output_s3_bucket)
-                        print("uploaded to s3://{}/{}".format(output_s3_bucket, upload_key))
-                        print ("<<updload key: ", upload_key)
-                        infer_ls.append(upload_key)
-                    except:
-                        continue
-
-            #infer on sub-images
-            pool = mul.Pool(10)
-            res = pool.map(infer, infer_ls)
-            print ("<<<<<<<<<<<<<<<")
-            print ("<<<< res", res)
-
-            label = post_process(res,res_pos)
-
-        except:
-            label = "NA"
+        #except:
+         #   label = "NA"
 
         print ("<<<< label", label)
         result[s3_path] = label
 
         # save json file
+
         file_name_fre = ''.join(file_name.split('.')[:-1])
         json_file = file_name_fre+".json"
         print ("<<<json file: ", json_file)
@@ -127,8 +113,30 @@ def text_summary_main(input_s3_path_list: list, endpoint_name, output_s3_bucket,
         delete_file(json_file)
         delete_file(file_name)
 
-def infer(input_image):
-    #from boto3.session import Session
+def draw_bbox(file_name,classes,confidences,boxes):
+    frame = cv.imread(file_name)
+    with open('./coco.names', 'rt') as f:
+        names = f.read().rstrip('\n').split('\n')
+    for classId, confidence, box in zip(classes.flatten(), confidences.flatten(), boxes):
+        label = '%.2f' % confidence
+        label = '%s: %s' % (names[classId], label)
+        labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        left, top, width, height = box
+        top = max(top, labelSize[1])
+        cv.rectangle(frame, box, color=(0, 255, 0), thickness=3)
+        cv.rectangle(frame, (left, top - labelSize[1]), (left + labelSize[0], top + baseLine), (255, 255, 255), cv.FILLED)
+        cv.putText(frame, label, (left, top), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+
+    cv.imwrite(file_name, frame)
+    print ("<<<<done draw bbox!")
+    return
+
+
+def infer(bucket,input_image):
+    """
+    infer on s3 input image, return key,vals
+    """
+    from boto3.session import Session
     import json
 
     bucket = 'predictive-solution'
@@ -139,8 +147,6 @@ def infer(input_image):
         'content_type': "application/json",
     }
     payload = json.dumps(test_data)
-
-
     session = Session()
 
     runtime = session.client("runtime.sagemaker")
@@ -151,30 +157,7 @@ def infer(input_image):
 
     result = json.loads(response["Body"].read())
     print (result)
-
-def infer(input_image):
-    #from boto3.session import Session
-    import json
-
-    image_uri = input_image
-    test_data = {
-        'bucket' : output_s3_bucket,
-        'image_uri' : image_uri,
-        'content_type': "application/json",
-    }
-    payload = json.dumps(test_data)
-    session = Session(region_name=region_name)
-
-    runtime = session.client("runtime.sagemaker")
-    response = runtime.invoke_endpoint(
-        EndpointName='esd-crnn',
-        ContentType="application/json",
-        Body=payload)
-
-    result = json.loads(response["Body"].read().decode(encoding='utf-8').encode(encoding='utf-8'))
-    print ("<<< predict result: ",result)
-    res = input_image+': ' + result['result']
-    return res
+    return result
 
 def delete_file(file):
     """
@@ -187,47 +170,6 @@ def delete_file(file):
             os.remove(file)
         except:
             pass
-
-def convert_to_key(x):
-    a = x.split('/')[1]
-    a = ('_'.join(a.split('_')[1:]))
-    return a[:-5]
-
-def convert_to_key_index(x):
-    a = x.split('/')[1]
-    a = ('_'.join(a.split('_')[1:]))
-    return a[-5]
-
-def post_process(x,Res):
-    keys = [i.split(':')[0] for i in x]
-    vals = [i.split(':')[1] for i in x]
-    key_map = [convert_to_key(x) for x in keys]
-    print ("<<<<< key map: ",key_map)
-    key_index_map = [convert_to_key_index(x) for x in keys]
-    #dataframe for result from prediction
-    df = pd.DataFrame({'x1':keys,'x2':vals,'x3':key_map,'x4':key_index_map})
-
-    print ("head of df: ",df.head())
-    print ("<<<<<<< RES", Res)
-    keys_res = list(Res.keys())
-    pos_res = list(Res.values())
-    for i in range(len(pos_res)):
-        for j in range(len(pos_res[i])):
-            pos_res[i][j]=pos_res[i][j].tolist()
-
-    df2 = pd.DataFrame({'x3':keys_res,'pos':pos_res})
-    print ("head of df2", df2.head())
-    print ("df2 keys: ", df2.x3)
-    print ("df keys: ", df.x3)
-
-    df_res = pd.merge(df,df2,on='x3')
-    print ("df_res: ", df_res.head())
-    df_res = df_res.sort_values(by=["x3","x4"])
-    label = {'keys':df_res["x3"].tolist(),
-             "vals":df_res["x2"].tolist(),
-             "pos":df_res["pos"].tolist()}
-
-    return label
 
 def __connect_ES() -> Elasticsearch:
     eprint('Connecting to the ES Endpoint {}:{}'.format(elastic_search_host, elastic_search_port))

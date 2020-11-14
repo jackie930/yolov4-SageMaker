@@ -10,8 +10,8 @@ profile=$2
 
 if [ "$image" == "" ]
 then
-    echo "Use image name esd_br_bot"
-    image="esd_br_bot"
+    echo "Use image name yolov4_image_bot"
+    image="yolov4_image_bot"
 fi
 
 if [ "$profile" == "" ]
