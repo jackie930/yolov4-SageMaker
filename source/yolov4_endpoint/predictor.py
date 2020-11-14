@@ -2,7 +2,7 @@
 import sys
 import json
 import boto3
-
+import os
 import warnings
 
 warnings.filterwarnings("ignore",category=FutureWarning)
@@ -31,11 +31,13 @@ s3_client = boto3.client('s3')
 
 def yolo_infer(weight,names,cfg,pic):
     #TODO: define endpoint output
+    frame = cv.imread(pic)
+    print ("<<<<pic shape:", frame.shape)
+
     net = cv.dnn_DetectionModel(cfg,weight)
     net.setInputSize(608, 608)
     net.setInputScale(1.0 / 255)
     net.setInputSwapRB(True)
-    frame = cv.imread(pic)
     with open(names, 'rt') as f:
         names = f.read().rstrip('\n').split('\n')
 
@@ -76,7 +78,6 @@ def invocations():
     download_file_name = image_uri.split('/')[-1]
     print ("<<<<download_file_name ", download_file_name)
 
-    #download_file_name = './test.jpg'
     s3_client.download_file(bucket, image_uri, download_file_name)
     #local test
     #download_file_name='./dog.jpg'
@@ -86,18 +87,26 @@ def invocations():
     print('Start to inference:')
 
     #LOAD MODEL
-    weight = './pretrained_model/yolov4.weights'
-    names = './pretrained_model/coco.names'
-    cfg = './pretrained_model/yolov4.cfg'
+    weight = './yolov4.weights'
+    names = './coco.names'
+    cfg = './yolov4.cfg'
+
+    #make sure the model parameters exist
+    for i in [weight,names,cfg]:
+        if os.path.exists(i):
+            print ("<<<<pretrained model exists for :", i)
+        else:
+            print ("<<< make sure the model parameters exist for: ", i)
+            break
 
     #make inference
     classes, confidences, boxes = yolo_infer(weight,names,cfg, download_file_name)
     #print("image_path:{},label:{}".format(download_file_name, label))
     print ("Done inference! ")
     inference_result = {
-        'classes':classes,
-        'confidences':confidences,
-        'boxes':boxes
+        'classes':classes.tolist(),
+        'confidences':confidences.tolist(),
+        'boxes':boxes.tolist()
     }
     _payload = json.dumps(inference_result,ensure_ascii=False)
 
