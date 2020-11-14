@@ -8,10 +8,11 @@ Deploy YOLO-V4 on Amazon SageMaker
 
 - [x] **Use opencv-4.4.0.40 to deploy yolov4**
 - [x] **Use flask+docker to deploy the rest-api locally**
-- [ ] **Use Amazon SageMaker to deploy the endpoint**
+- [x] **Use Amazon SageMaker to deploy the endpoint**
 - [x] **Suopport video input loccally**
 - [ ] **video queue infer**
-- [ ] **deploy on spot bot)**
+- [ ] **deploy yolov4-image-bot on spot bot**
+- [ ] **deploy yolov4-video-bot on spot bot**
 
 
 ## Quick Start
@@ -74,6 +75,42 @@ Wall time: 1.66 s
 ~~~~
 cd yolov4_endpoint
 python create_endpoint.py
+~~~~
+
+# use endpoint
+~~~~ python
+def infer(input_image):
+    from boto3.session import Session
+    import json
+
+    bucket = 'predictive-solution'
+    image_uri = input_image
+    test_data = {
+        'bucket' : bucket,
+        'image_uri' : image_uri,
+        'content_type': "application/json",
+    }
+    payload = json.dumps(test_data)
+
+
+    session = Session()
+
+    runtime = session.client("runtime.sagemaker")
+    response = runtime.invoke_endpoint(
+        EndpointName='yolov4',
+        ContentType="application/json",
+        Body=payload)
+
+    result = json.loads(response["Body"].read())
+    print (result)
+    
+infer('yolotest/dog.jpg')
+~~~~
+
+~~~~text
+{'classes': [[1], [7], [16], [58]], 'confidences': [[0.9237533807754517], [0.917914867401123], [0.979065477848053], [0.3334614336490631]], 'boxes': [[114, 127, 458, 298], [464, 77, 220, 93], [128, 225, 184, 316], [681, 109, 36, 45]]}
+CPU times: user 116 ms, sys: 8.93 ms, total: 125 ms
+Wall time: 6.04 s
 ~~~~
 
 ## local infer on image
