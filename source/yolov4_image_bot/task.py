@@ -71,7 +71,7 @@ def text_summary_main(input_s3_path_list: list, endpoint_name, output_s3_bucket,
         # read image
         eprint("process", s3_path)
        #process_the_image_and_output_res
-        infer_res = infer(bucket,input_image)
+        infer_res = infer(bucket,key)
         label = {'classes': infer_res['classes'],
                  'confidences':infer_res['confidences'],
                  'boxes':infer_res['boxes']}

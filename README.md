@@ -13,6 +13,7 @@ Deploy YOLO-V4 on Amazon SageMaker
 - [ ] **video queue infer**
 - [ ] **deploy yolov4-image-bot on spot bot**
 - [ ] **deploy yolov4-video-bot on spot bot**
+- [ ] **Speed up infer: use gpu for inference**
 
 
 ## Quick Start
