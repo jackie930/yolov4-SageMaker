@@ -16,12 +16,22 @@ Deploy YOLO-V4 on Amazon SageMaker
 
 
 ## Quick Start
+
 ---------------
-# first download yolov4 public model and put under pretrained_model folder
-s3://open-source-models/pretrained_model.zip
 
-todo : add how to download from public website
+first download yolov4 public model and put under pretrained_model folder
 
+```shell script
+mkdir source/yolov4_endpoint/pretrained_model
+git clone https://github.com/AlexeyAB/darknet.git
+cp ./darknet/cfg/yolov4.cfg ./source/yolov4_endpoint/pretrained_model/
+cp ./darknet/cfg/coco.names ./source/yolov4_endpoint/pretrained_model/
+cd source/yolov4_endpoint/pretrained_model
+#download weight
+wget https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights
+```
+
+The file stucture will look like below
 ```shell script
 |-- source
     |-- yolov4_endpoint
