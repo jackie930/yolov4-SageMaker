@@ -27,6 +27,7 @@ mkdir source/yolov4_endpoint/pretrained_model
 git clone https://github.com/AlexeyAB/darknet.git
 cp ./darknet/cfg/yolov4.cfg ./source/yolov4_endpoint/pretrained_model/
 cp ./darknet/cfg/coco.names ./source/yolov4_endpoint/pretrained_model/
+cp ./darknet/cfg/coco.names ./source/yolov4_image_bot/
 cd source/yolov4_endpoint/pretrained_model
 #download weight
 wget https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights

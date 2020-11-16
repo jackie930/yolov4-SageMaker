@@ -18,4 +18,5 @@ RUN pip install opencv-python==4.4.0.40 -i https://opentuna.cn/pypi/web/simple
 RUN pip install scipy fitz PyMuPDF imutils==0.5.3 -i https://opentuna.cn/pypi/web/simple
 #RUN pip install torch -i https://opentuna.cn/pypi/web/simple
 #CMD ["python","-u","/tmp/task.py"]
+
 ENTRYPOINT ["python", "/tmp/task.py"]

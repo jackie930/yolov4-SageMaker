@@ -304,6 +304,104 @@ def update_status_by_id(es, doc_id, status="COMPLETED", output=""):
     )
     return resp
 
+
+def infer(bucket,input_image):
+    """
+    infer on s3 input image, return key,vals
+    """
+    from boto3.session import Session
+    import json
+
+    image_uri = input_image
+    test_data = {
+        'bucket' : bucket,
+        'image_uri' : image_uri,
+        'content_type': "application/json",
+    }
+    payload = json.dumps(test_data)
+    session = Session(region_name=region_name)
+
+    runtime = session.client("runtime.sagemaker")
+    response = runtime.invoke_endpoint(
+        EndpointName='yolov4',
+        ContentType="application/json",
+        Body=payload)
+
+    result = json.loads(response["Body"].read())
+    print (result)
+    return result
+
+
+
+def detect_objects(weight,names,cfg,video):
+
+    # get video frames and pass to YOLO for output
+
+    cap = cv.VideoCapture(video)
+    writer = None
+    # try to determine the total number of frames in the video file
+    try:
+        prop = cv.cv.CV_CAP_PROP_FRAME_COUNT if imutils.is_cv2() \
+            else cv.CAP_PROP_FRAME_COUNT
+        total = int(cap.get(prop))
+        print("[INFO] {} total frames in video".format(total))
+    # an error occurred while trying to determine the total
+    # number of frames in the video file
+    except:
+        print("[INFO] could not determine # of frames in video")
+        print("[INFO] no approx. completion time can be provided")
+        total = -1
+
+    i=0
+    # initialize video stream, pointer to output video file and grabbing frame dimension
+
+    while(cap.isOpened()):
+        stime= time.time()
+        ret, frame = cap.read()
+        classes, confidences, boxes = yolo_infer(weight,cfg,frame)
+        end = time.time()
+
+        i = i+1
+        print (i)
+
+        if ret:
+            for classId, confidence, box in zip(classes.flatten(), confidences.flatten(), boxes):
+                label = '%.2f' % confidence
+                label = '%s: %s' % (names[classId], label)
+                labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                left, top, width, height = box
+                top = max(top, labelSize[1])
+                cv.rectangle(frame, box, color=(0, 255, 0), thickness=3)
+                cv.rectangle(frame, (left, top - labelSize[1]), (left + labelSize[0], top + baseLine), (255, 255, 255), cv.FILLED)
+                cv.putText(frame, label, (left, top), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0))
+
+            if writer is None:
+                # Initialize the video writer
+                fourcc = cv.VideoWriter_fourcc(*"MP4V")
+                writer = cv.VideoWriter('./res.mp4', fourcc, 30,
+                                        (frame.shape[1], frame.shape[0]), True)
+                # some information on processing single frame
+                if total > 0:
+                    elap = (end - stime)
+                    print("[INFO] single frame took {:.4f} seconds".format(elap))
+                    print("[INFO] estimated total time to finish: {:.4f}".format(
+                        elap * total))
+
+
+            writer.write(frame)
+
+            print('FPS {:1f}'.format(1/(time.time() -stime)))
+            if cv.waitKey(1)  & 0xFF == ord('q'):
+                break
+            if i>30:
+                break
+        else:
+            break
+
+    print ("<<<<clean up")
+    writer.release()
+    cap.release()
+
 if __name__ == "__main__":
     eprint(">>> Start execution.")
 

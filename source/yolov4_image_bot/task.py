@@ -6,7 +6,7 @@ import argparse
 import os
 
 import sys
-
+import cv2 as cv
 import json
 from boto3.session import Session
 import multiprocessing as mul
@@ -114,9 +114,18 @@ def text_summary_main(input_s3_path_list: list, endpoint_name, output_s3_bucket,
 
 def draw_bbox(file_name,classes,confidences,boxes):
     frame = cv.imread(file_name)
+
+    if os.path.exists('./coco.names'):
+        print ("<<<<path exists for names")
+    else:
+        print ("<<< make sure the model parameters exist for names")
+
     with open('./coco.names', 'rt') as f:
         names = f.read().rstrip('\n').split('\n')
-    for classId, confidence, box in zip(classes.flatten(), confidences.flatten(), boxes):
+    for classId, confidence, box in zip(classes, confidences, boxes):
+        classId = classId[0]
+        confidence = confidence[0]
+        print ("<<<<",classId, confidence, box)
         label = '%.2f' % confidence
         label = '%s: %s' % (names[classId], label)
         labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX, 0.5, 1)
@@ -138,7 +147,6 @@ def infer(bucket,input_image):
     from boto3.session import Session
     import json
 
-    bucket = 'predictive-solution'
     image_uri = input_image
     test_data = {
         'bucket' : bucket,
@@ -146,7 +154,7 @@ def infer(bucket,input_image):
         'content_type': "application/json",
     }
     payload = json.dumps(test_data)
-    session = Session()
+    session = Session(region_name=region_name)
 
     runtime = session.client("runtime.sagemaker")
     response = runtime.invoke_endpoint(

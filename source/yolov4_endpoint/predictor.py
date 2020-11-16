@@ -34,7 +34,11 @@ def yolo_infer(weight,names,cfg,pic):
     frame = cv.imread(pic)
     print ("<<<<pic shape:", frame.shape)
 
-    net = cv.dnn_DetectionModel(cfg,weight)
+    model = cv.dnn.readNet(weight,cfg)
+    model.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
+    model.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA_FP16)
+
+    net = cv.dnn_DetectionModel(model)
     net.setInputSize(608, 608)
     net.setInputScale(1.0 / 255)
     net.setInputSwapRB(True)
